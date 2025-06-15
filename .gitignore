@@ -1,0 +1,35 @@
+# Python virtual environment
+.venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Logs and debug files
+*.log
+*.out
+*.err
+
+# VS Code settings
+.vscode/
+
+# MongoDB dump files
+*.bson
+*.json
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.swp
+*.swo
+*.tmp
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Environment variables
+.env
