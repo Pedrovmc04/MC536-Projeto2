@@ -2,23 +2,27 @@ import psycopg2
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 from datetime import datetime
+import os
+from dotenv import load_dotenv
+
+# Carrega as variáveis do arquivo .env para o ambiente
+load_dotenv()
 
 # --- CONFIGURAÇÃO DOS BANCOS DE DADOS ---
 # Altere estes valores para corresponder à sua configuração local
 
 # Configuração do PostgreSQL
 PG_CONFIG = {
-    'dbname': 'my_database',
-    'user': 'postgres',
-    'password': 'mypassword',
-    'host': '127.0.0.1',
-    'port': '5433'
+    'dbname': os.getenv('PG_DBNAME'),
+    'user': os.getenv('PG_USER'),
+    'password': os.getenv('PG_PASSWORD'),
+    'host': os.getenv('PG_HOST'),
+    'port': os.getenv('PG_PORT', '5432')
 }
 
 # Configuração do MongoDB Atlas
-# Substitua URI com o seu URI de conexão do MongoDB Atlas
-MONGO_URI = "URI"
-MONGO_DB_NAME = "db_energia"
+MONGO_URI = os.getenv('MONGO_URI')
+MONGO_DB_NAME = os.getenv('MONGO_DB_NAME')
 
 def migrate_paises(pg_cursor, mongo_db):
     """
