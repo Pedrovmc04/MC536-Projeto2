@@ -6,7 +6,7 @@ from datetime import datetime
 # --- CONFIGURAÇÃO DOS BANCOS DE DADOS ---
 # Altere estes valores para corresponder à sua configuração local
 
-# Configuração do PostgreSQL (baseada no seu notebook)
+# Configuração do PostgreSQL
 PG_CONFIG = {
     'dbname': 'my_database',
     'user': 'postgres',
@@ -17,7 +17,7 @@ PG_CONFIG = {
 
 # Configuração do MongoDB Atlas
 # Substitua URI com o seu URI de conexão do MongoDB Atlas
-MONGO_URI = "mongodb+srv://tiagoperrupato:hGZPDZyVpf479n3I@cluster0.abnaeml.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+MONGO_URI = "URI"
 MONGO_DB_NAME = "db_energia"
 
 def migrate_paises(pg_cursor, mongo_db):
