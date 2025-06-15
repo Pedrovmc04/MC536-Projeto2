@@ -40,7 +40,7 @@ try {
           cod_pais: {
             bsonType: "string",
             description: "Código ISO 3166-1 alpha-3 do país (obrigatório).",
-            pattern: "^[A-Z]{3}$"
+            pattern: "^[A-Z_]+$"
           },
           idh: {
             bsonType: "array",
@@ -128,7 +128,7 @@ try {
           cod_pais: {
             bsonType: "string",
             description: "Código de referência ao país onde a usina está localizada.",
-            pattern: "^[A-Z]{3}$"
+            pattern: "^[A-Z_]+$"
           },
           tipo_usina: { bsonType: "string" },
           agente_proprietario: { bsonType: "string" },
@@ -156,15 +156,30 @@ try {
             description: "Array de documentos embutidos, um para cada unidade geradora.",
             items: {
               bsonType: "object",
-              required: ["cod_unidade", "potencia_efetiva_mw"],
+              required: ["cod_equipamento", "potencia_efetiva_mw"],
               properties: {
                 cod_equipamento: { bsonType: "string" },
                 nome_unidade: { bsonType: "string" },
-                num_unidade: { bsonType: "int" },
+                num_unidade: { 
+                  bsonType: ["int", "null"], // Permitir inteiro ou nulo
+                  description: "Número da unidade geradora, pode ser nulo."
+                },
                 potencia_efetiva_mw: { bsonType: "double" },
-                data_entrada_teste: { bsonType: "date" },
-                data_entrada_operacao: { bsonType: "date" },
-                data_desativacao: { bsonType: "date" },
+                data_entrada_teste: { 
+                    bsonType: ["string", "null"], // Permitir nulo
+                    pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+                    description: "Data no formato YYYY-MM-DD"
+                },
+                data_entrada_operacao: {
+                    bsonType: ["string", "null"], // Permitir nulo
+                    pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+                    description: "Data no formato YYYY-MM-DD"
+                },
+                data_desativacao: {
+                    bsonType: ["string", "null"], // Permitir nulo
+                    pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+                    description: "Data no formato YYYY-MM-DD ou nulo"
+                },
                 combustivel: { bsonType: "string" }
               }
             }

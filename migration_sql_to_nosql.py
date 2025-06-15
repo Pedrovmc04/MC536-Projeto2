@@ -2,23 +2,27 @@ import psycopg2
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 from datetime import datetime
+import os
+from dotenv import load_dotenv
+
+# Carrega as variáveis do arquivo .env para o ambiente
+load_dotenv()
 
 # --- CONFIGURAÇÃO DOS BANCOS DE DADOS ---
 # Altere estes valores para corresponder à sua configuração local
 
 # Configuração do PostgreSQL
 PG_CONFIG = {
-    'dbname': 'my_database',
-    'user': 'postgres',
-    'password': 'mypassword',
-    'host': '127.0.0.1',
-    'port': '5432'
+    'dbname': os.getenv('PG_DBNAME'),
+    'user': os.getenv('PG_USER'),
+    'password': os.getenv('PG_PASSWORD'),
+    'host': os.getenv('PG_HOST'),
+    'port': os.getenv('PG_PORT', '5432')
 }
 
 # Configuração do MongoDB Atlas
-# Substitua pela sua URI
-MONGO_URI = "URI"
-MONGO_DB_NAME = "db_energia"
+MONGO_URI = os.getenv('MONGO_URI')
+MONGO_DB_NAME = os.getenv('MONGO_DB_NAME')
 
 def migrate_paises(pg_cursor, mongo_db):
     """
@@ -42,6 +46,11 @@ def migrate_paises(pg_cursor, mongo_db):
         print(f"Encontrados {len(paises)} países para migrar.")
 
         for id_pais, cod_pais, nome_pais in paises:
+            
+            if not cod_pais:
+                print(f"  AVISO: Código de país nulo para '{nome_pais}'. Pulando...")
+                continue
+            
             print(f"  Migrando dados para o país: {nome_pais} ({cod_pais})")
             
             # 2. Montar o documento base do país
@@ -124,6 +133,11 @@ def migrate_usinas(pg_cursor, mongo_db):
         usinas = pg_cursor.fetchall()
         print(f"Encontradas {len(usinas)} usinas para migrar.")
 
+        def format_date_as_string(d):
+            if d and isinstance(d, (datetime)):
+                return d.isoformat().split('T')[0] # Pega apenas a parte da data
+            return None # Retorna None se a data for nula
+        
         for usina_data in usinas:
             (id_usina, nome_usina, ceg, tipo_usina, modalidade_operacao, agente, 
              est_nome, est_cod, sub_nome, sub_cod, cod_pais) = usina_data
@@ -160,18 +174,14 @@ def migrate_usinas(pg_cursor, mongo_db):
             for unidade_data in unidades:
                 (id_ug, cod_equip, nome_ug, num_ug, dt_teste, dt_op, dt_desativ, pot_efetiva, combustivel, id_u) = unidade_data
                 
-                # Função auxiliar para tratar datas Nulas (None)
-                def format_date(d):
-                    return d if d else None
-                
                 usina_doc['unidades_geradoras'].append({
                     'cod_equipamento': cod_equip,
                     'nome_unidade': nome_ug,
                     'num_unidade': num_ug,
                     'potencia_efetiva_mw': float(pot_efetiva) if pot_efetiva else 0.0,
-                    'data_entrada_teste': format_date(dt_teste),
-                    'data_entrada_operacao': format_date(dt_op),
-                    'data_desativacao': format_date(dt_desativ),
+                    'data_entrada_teste': format_date_as_string(dt_teste),
+                    'data_entrada_operacao': format_date_as_string(dt_op),
+                    'data_desativacao': format_date_as_string(dt_desativ),
                     'combustivel': combustivel
                 })
             
