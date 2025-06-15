@@ -6,7 +6,7 @@ from datetime import datetime
 # --- CONFIGURAÇÃO DOS BANCOS DE DADOS ---
 # Altere estes valores para corresponder à sua configuração local
 
-# Configuração do PostgreSQL (baseada no seu notebook)
+# Configuração do PostgreSQL
 PG_CONFIG = {
     'dbname': 'my_database',
     'user': 'postgres',
