@@ -12,12 +12,12 @@ PG_CONFIG = {
     'user': 'postgres',
     'password': 'mypassword',
     'host': '127.0.0.1',
-    'port': '5432'
+    'port': '5433'
 }
 
 # Configuração do MongoDB Atlas
-# Substitua 'seu_usuario' e 'sua_senha' pelos seus dados de acesso
-MONGO_URI = "mongodb+srv://seu_usuario:sua_senha@atlas-j07mdg-shard-0.mongodb.net/?retryWrites=true&w=majority"
+# Substitua URI com o seu URI de conexão do MongoDB Atlas
+MONGO_URI = "mongodb+srv://tiagoperrupato:hGZPDZyVpf479n3I@cluster0.abnaeml.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 MONGO_DB_NAME = "db_energia"
 
 def migrate_paises(pg_cursor, mongo_db):
@@ -42,6 +42,11 @@ def migrate_paises(pg_cursor, mongo_db):
         print(f"Encontrados {len(paises)} países para migrar.")
 
         for id_pais, cod_pais, nome_pais in paises:
+            
+            if not cod_pais:
+                print(f"  AVISO: Código de país nulo para '{nome_pais}'. Pulando...")
+                continue
+            
             print(f"  Migrando dados para o país: {nome_pais} ({cod_pais})")
             
             # 2. Montar o documento base do país
@@ -124,6 +129,11 @@ def migrate_usinas(pg_cursor, mongo_db):
         usinas = pg_cursor.fetchall()
         print(f"Encontradas {len(usinas)} usinas para migrar.")
 
+        def format_date_as_string(d):
+            if d and isinstance(d, (datetime)):
+                return d.isoformat().split('T')[0] # Pega apenas a parte da data
+            return None # Retorna None se a data for nula
+        
         for usina_data in usinas:
             (id_usina, nome_usina, ceg, tipo_usina, modalidade_operacao, agente, 
              est_nome, est_cod, sub_nome, sub_cod, cod_pais) = usina_data
@@ -160,18 +170,14 @@ def migrate_usinas(pg_cursor, mongo_db):
             for unidade_data in unidades:
                 (id_ug, cod_equip, nome_ug, num_ug, dt_teste, dt_op, dt_desativ, pot_efetiva, combustivel, id_u) = unidade_data
                 
-                # Função auxiliar para tratar datas Nulas (None)
-                def format_date(d):
-                    return d if d else None
-                
                 usina_doc['unidades_geradoras'].append({
                     'cod_equipamento': cod_equip,
                     'nome_unidade': nome_ug,
                     'num_unidade': num_ug,
                     'potencia_efetiva_mw': float(pot_efetiva) if pot_efetiva else 0.0,
-                    'data_entrada_teste': format_date(dt_teste),
-                    'data_entrada_operacao': format_date(dt_op),
-                    'data_desativacao': format_date(dt_desativ),
+                    'data_entrada_teste': format_date_as_string(dt_teste),
+                    'data_entrada_operacao': format_date_as_string(dt_op),
+                    'data_desativacao': format_date_as_string(dt_desativ),
                     'combustivel': combustivel
                 })
             
