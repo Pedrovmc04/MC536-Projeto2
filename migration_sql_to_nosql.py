@@ -16,8 +16,8 @@ PG_CONFIG = {
 }
 
 # Configuração do MongoDB Atlas
-# Substitua 'seu_usuario' e 'sua_senha' pelos seus dados de acesso
-MONGO_URI = "mongodb+srv://seu_usuario:sua_senha@atlas-j07mdg-shard-0.mongodb.net/?retryWrites=true&w=majority"
+# Substitua pela sua URI
+MONGO_URI = "URI"
 MONGO_DB_NAME = "db_energia"
 
 def migrate_paises(pg_cursor, mongo_db):
