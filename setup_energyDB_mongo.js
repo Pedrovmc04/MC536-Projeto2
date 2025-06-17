@@ -78,7 +78,19 @@ try {
                 }
             }
           },
-          acesso_energia_limpa_cozinha: {
+          acesso_energia_renovavel: {
+            bsonType: "array",
+            description: "Array de documentos de acesso à energia renovável.",
+            items: {
+                bsonType: "object",
+                required: ["ano", "porcentagem"],
+                properties: {
+                    ano: { bsonType: "int" },
+                    porcentagem: { bsonType: "double" }
+                }
+            }
+          },
+          acesso_combustivel_limpo: {
             bsonType: "array",
             description: "Array de documentos de acesso à energia limpa na cozinha.",
             items: {
@@ -90,9 +102,9 @@ try {
                 }
             }
           },
-          geracao_energia_renovavel_per_capta: {
+          geracao_energia_renovavel_per_capita: {
             bsonType: "array",
-            description: "Array de documentos de geração de energia renovável per capta.",
+            description: "Array de documentos de geração de energia renovável per capita.",
             items: {
                 bsonType: "object",
                 required: ["ano", "geracao_watts"],
@@ -199,11 +211,12 @@ print("\nCriando índices...");
 try {
     // Índices para a coleção 'paises'
     db.paises.createIndex({ "cod_pais": 1 }, { unique: true });
-    db.paises.createIndex({ "idh.ano": 1 });
+    db.paises.createIndex({ "idh.ano": 1 })
     db.paises.createIndex({ "investimento_energia_limpa.ano": 1 });
     db.paises.createIndex({ "acesso_eletricidade.ano": 1 });
-    db.paises.createIndex({ "acesso_energia_limpa_cozinha.ano": 1 });
-    db.paises.createIndex({ "geracao_energia_renovavel_per_capta.ano": 1 });
+    db.paises.createIndex({ "acesso_energia_renovavel.ano": 1 });
+    db.paises.createIndex({ "acesso_combustivel_limpo.ano": 1 });
+    db.paises.createIndex({ "geracao_energia_renovavel_per_capita.ano": 1 });
 
     // Índices para a coleção 'usinas'
     db.usinas.createIndex({ "ceg": 1 }, { unique: true });
