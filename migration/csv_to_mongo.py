@@ -4,29 +4,29 @@ from pymongo.errors import ConnectionFailure
 import os
 from dotenv import load_dotenv
 import numpy as np
-import re # Importa a biblioteca de expressões regulares
+import re # Import regular expression library
 
-# Carrega as variáveis do arquivo .env para o ambiente
+# Load environment variables from the .env file into the environment
 load_dotenv()
 
-# --- CONFIGURAÇÃO DO MONGODB ---
+# --- MONGODB CONFIGURATION ---
 MONGO_URI = os.getenv('MONGO_URI')
 MONGO_DB_NAME = os.getenv('MONGO_DB_NAME')
 
-# Diretório onde os arquivos CSV estão localizados
+# Directory where the CSV files are located
 INPUT_DIR = 'migration/csv_data'
 
 def import_paises_from_csv(mongo_db):
     """
-    Importa dados de países e indicadores dos arquivos CSV para a coleção 'paises' no MongoDB.
+    Imports country data and indicators from CSV files into the 'paises' collection in MongoDB.
     """
-    print("Iniciando importação da coleção 'paises' a partir dos CSVs...")
+    print("Starting import of 'paises' collection from CSVs...")
 
     try:
-        # Carregar o CSV principal de países
+        # Load the main countries CSV
         df_paises = pd.read_csv(os.path.join(INPUT_DIR, 'paises.csv'))
 
-        # Mapeamento dos arquivos de indicadores para os nomes dos campos no MongoDB
+        # Mapping of indicator files to MongoDB field names
         indicator_files = {
             'idh': 'idh',
             'acesso_eletricidade': 'acesso_eletricidade',
@@ -36,7 +36,7 @@ def import_paises_from_csv(mongo_db):
             'energia_renovavel_per_capita': 'geracao_energia_renovavel_per_capita'
         }
 
-        # Pré-carregar e agrupar todos os dados dos indicadores por 'id_pais'
+        # Preload and group all indicator data by 'id_pais'
         indicator_data = {}
         for file_key, mongo_field in indicator_files.items():
             df_indicator = pd.read_csv(os.path.join(INPUT_DIR, f'indicador_{file_key}.csv'))
@@ -45,24 +45,24 @@ def import_paises_from_csv(mongo_db):
         for _, row in df_paises.iterrows():
             id_pais, cod_pais_raw, nome_pais = row['id_pais'], row['code'], row['nome']
             
-            # --- INÍCIO DA CORREÇÃO ---
-            # Verifica se o código do país é nulo antes de processar
+            # --- START OF CORRECTION ---
+            # Check if the country code is null before processing
             if pd.isna(cod_pais_raw):
-                print(f"  AVISO: 'cod_pais' nulo para o país '{nome_pais}'. Pulando...")
+                print(f"  WARNING: 'cod_pais' is null for country '{nome_pais}'. Skipping...")
                 continue
             
-            # Limpa o cod_pais para remover caracteres inválidos, mantendo apenas letras maiúsculas e _
+            # Clean the cod_pais to remove invalid characters, keeping only uppercase letters and _
             cod_pais_clean = re.sub(r'[^A-Z_]', '', str(cod_pais_raw))
 
-            # Se o código ficar vazio após a limpeza, pula o registro
+            # If the code becomes empty after cleaning, skip the record
             if not cod_pais_clean:
-                print(f"  AVISO: 'cod_pais' ('{cod_pais_raw}') inválido para o país '{nome_pais}'. Pulando após limpeza.")
+                print(f"  WARNING: 'cod_pais' ('{cod_pais_raw}') is invalid for country '{nome_pais}'. Skipping after cleaning.")
                 continue
-            # --- FIM DA CORREÇÃO ---
+            # --- END OF CORRECTION ---
             
-            print(f"  Montando documento para o país: {nome_pais} ({cod_pais_clean})")
+            print(f"  Building document for country: {nome_pais} ({cod_pais_clean})")
 
-            # Usa o valor limpo 'cod_pais_clean' para montar o documento
+            # Use the cleaned 'cod_pais_clean' value to build the document
             pais_doc = {
                 'nome': nome_pais,
                 'cod_pais': cod_pais_clean 
@@ -86,38 +86,41 @@ def import_paises_from_csv(mongo_db):
                         {'ano': int(r['ano']), value_key_name: float(r['valor'])} for r in records
                     ]
             
-            # Inserir/Atualizar o documento no MongoDB usando o código limpo
+            # Insert/Update the document in MongoDB using the cleaned code
             mongo_db.paises.update_one(
                 {'cod_pais': cod_pais_clean},
                 {'$set': pais_doc},
                 upsert=True
             )
         
-        print("Importação da coleção 'paises' concluída com sucesso!")
+        print("Import of 'paises' collection completed successfully!")
 
     except Exception as e:
-        print(f"ERRO durante a importação de 'paises': {e}")
+        print(f"ERROR during import of 'paises': {e}")
 
 
 def import_usinas_from_csv(mongo_db):
     """
-    Importa dados de usinas e unidades geradoras dos CSVs para a coleção 'usinas' no MongoDB.
+    Imports power plant and generating unit data from CSVs into the 'usinas' collection in MongoDB.
     """
-    print("\nIniciando importação da coleção 'usinas' a partir dos CSVs...")
+    print("\nStarting import of 'usinas' collection from CSVs...")
     
     try:
+        # Load the main power plants CSV
         df_usinas = pd.read_csv(os.path.join(INPUT_DIR, 'usinas.csv'))
+        # Load all generating units at once
         df_unidades = pd.read_csv(os.path.join(INPUT_DIR, 'unidades_geradoras.csv'))
         unidades_agrupadas = df_unidades.groupby('id_usina')
 
         for _, usina_row in df_usinas.iterrows():
             ceg = usina_row['ceg']
             if pd.isna(ceg):
-                print(f"  AVISO: Usina '{usina_row['nome_usina']}' sem código CEG. Pulando...")
+                print(f"  WARNING: Power plant '{usina_row['nome_usina']}' has no CEG code. Skipping...")
                 continue
                 
-            print(f"  Montando documento para a usina: {usina_row['nome_usina']} ({ceg})")
+            print(f"  Building document for power plant: {usina_row['nome_usina']} ({ceg})")
 
+            # Build the document for the power plant
             usina_doc = {
                 'nome_usina': usina_row['nome_usina'],
                 'ceg': ceg,
@@ -160,28 +163,28 @@ def import_usinas_from_csv(mongo_db):
                 upsert=True
             )
             
-        print("Importação da coleção 'usinas' concluída com sucesso!")
+        print("Import of 'usinas' collection completed successfully!")
         
     except Exception as e:
-        print(f"ERRO durante a importação de 'usinas': {e}")
+        print(f"ERROR during import of 'usinas': {e}")
 
 
 if __name__ == '__main__':
     mongo_client = None
     try:
-        print("Conectando ao MongoDB Atlas...")
+        print("Connecting to MongoDB Atlas...")
         mongo_client = MongoClient(MONGO_URI)
         mongo_client.admin.command('ping')
         mongo_db = mongo_client[MONGO_DB_NAME]
-        print("Conexão com MongoDB Atlas bem-sucedida.")
+        print("Connection to MongoDB Atlas successful.")
 
         import_paises_from_csv(mongo_db)
         import_usinas_from_csv(mongo_db)
 
     except (Exception, ConnectionFailure) as error:
-        print(f"Ocorreu um erro: {error}")
+        print(f"An error occurred: {error}")
     
     finally:
         if mongo_client:
             mongo_client.close()
-            print("\nConexão com MongoDB fechada.")
+            print("\nMongoDB connection closed.")

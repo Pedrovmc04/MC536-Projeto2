@@ -1,8 +1,10 @@
 # MC536: MongoDB Database Project - Renewable Energy and Development Indicators
 
 **Students:**
-* [Your Full Name] - RA [Your RA]
-* [Colleague's Full Name] - RA [Colleague's RA]
+This project was developed by
+* [Luiz Eduardo Silva Salustriano](https://github.com/LuizSalu) RA 183139
+* [Pedro Victor Menezes Carneiro](https://github.com/Pedrovmc04) RA 183789
+* [Tiago Perrupato Antunes](https://github.com/tiagoperrupato) RA 194058
 
 ## Overview
 
@@ -14,6 +16,75 @@ This repository contains:
 3. **Setup and Usage** of the database
 4. The **migration scripts** and data population scripts.
 5. **Five non-trivial queries** performed in MongoDB.
+
+---
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Project Structure](#project-structure)
+3. [Justification for Choosing MongoDB for Scenario B](#1-justification-for-choosing-mongodb-for-scenario-b)
+    - [Technical Analysis](#technical-analysis)
+        - [File Storage Format](#file-storage-format)
+        - [Query Language and Processing](#query-language-and-processing)
+        - [Transaction Processing and Control](#transaction-processing-and-control)
+        - [Recovery and Security Mechanisms](#recovery-and-security-mechanisms)
+        - [Scalability and Availability](#scalability-and-availability)
+4. [Logical Model](#2-logical-model)
+    - [Collection `paises`](#collection-paises)
+    - [Collection `usinas`](#collection-usinas)
+5. [Setup and Usage](#3-setup-and-usage)
+    - [Prerequisites](#prerequisites)
+    - [Database Setup](#database-setup)
+    - [Data Population](#data-population)
+    - [Running the Queries](#running-the-queries)
+    - [Data Preprocessing](#data-preprocessing)
+6. [Physical Model and Population](#4-physical-model-and-population)
+7. [Queries Explained](#5-queries-explained)
+    - [Query 1: Comparison of Electricity Access - Brazil vs. Global Average](#query-1-comparison-of-electricity-access---brazil-vs-global-average)
+    - [Query 2: Top 10 Countries with Highest Renewable Energy Access (2020)](#query-2-top-10-countries-with-highest-renewable-energy-access-2020)
+    - [Query 3: Correlation Between HDI and Renewable Energy Generation Per Capita](#query-3-correlation-between-hdi-and-renewable-energy-generation-per-capita)
+    - [Query 4: Agents with Multiple Power Plants in Brazil](#query-4-agents-with-multiple-power-plants-in-brazil)
+    - [Query 5: Number of Power Plants by Fuel Type in Brazil](#query-5-number-of-power-plants-by-fuel-type-in-brazil)
+    - [Query 6: Total Generation Capacity by State in Brazil](#query-6-total-generation-capacity-by-state-in-brazil)
+    - [Query 7: Percentage of Renewable Power Plants by State](#query-7-percentage-of-renewable-power-plants-by-state)
+    - [Query 8: Renewable Capacity by State vs. National Investment](#query-8-renewable-capacity-by-state-vs-national-investment)
+
+---
+
+## Project Structure
+
+```
+MC536-Projeto2/
+├── README.md
+├── setup_energyDB_mongo.js
+├── migration/
+│   ├── csv_to_mongo.py
+│   ├── sql_to_csv.py
+│   ├── csv_data/
+│   │   ├── indicador_acesso_combustivel_limpo.csv
+│   │   ├── indicador_acesso_eletricidade.csv
+│   │   ├── indicador_acesso_energia_renovavel.csv
+│   │   ├── indicador_energia_renovavel_per_capita.csv
+│   │   ├── indicador_idh.csv
+│   │   ├── indicador_investimento_energia_limpa.csv
+│   │   ├── paises.csv
+│   │   ├── unidades_geradoras.csv
+│   │   └── usinas.csv
+├── models/
+│   └── Logical_model.png
+├── queries/
+│   ├── run_all_queries.py
+│   ├── query_results/
+│   │   ├── 1_comparacao_acesso_eletricidade.csv
+│   │   ├── 2_top10_paises_energia_renovavel.csv
+│   │   ├── 3_correlacao_idh_geracao_renovavel.csv
+│   │   ├── 4_agentes_com_multiplas_usinas.csv
+│   │   ├── 5_usinas_por_combustivel.csv
+│   │   ├── 6_capacidade_por_estado.csv
+│   │   ├── 7_percentual_usinas_renovaveis_estado.csv
+│   │   └── 8_analise_capacidade_vs_investimento.csv
+```
 
 ---
 
@@ -265,48 +336,3 @@ Below are the 8 queries implemented in this project, along with their objectives
 **Explanation:**
 - Groups power plants by their agent owner (`agente_proprietario`).
 - Counts the total number of power plants for each agent.
-- Filters agents with more than one power plant and sorts them by the total number of power plants.
-
----
-
-### **Query 5: Number of Power Plants by Fuel Type in Brazil**
-**Objective:** Aggregate the number of distinct power plants for each fuel type in Brazil.
-
-**Explanation:**
-- Unwinds the `unidades_geradoras` array to process individual generating units.
-- Groups the units by their fuel type (`combustivel`).
-- Counts the number of distinct power plants for each fuel type and sorts the results in descending order.
-
----
-
-### **Query 6: Total Generation Capacity by State in Brazil**
-**Objective:** Calculate the total generation capacity (in MW) for each state in Brazil.
-
-**Explanation:**
-- Unwinds the `unidades_geradoras` array to process individual generating units.
-- Groups the units by state (`estado.nome`) and sums their effective power (`potencia_efetiva_mw`).
-- Sorts the states by total generation capacity in descending order.
-
----
-
-### **Query 7: Percentage of Renewable Power Plants by State**
-**Objective:** Calculate the percentage of renewable power plants for each state in Brazil.
-
-**Explanation:**
-- Uses `$facet` to calculate the total number of power plants and the number of renewable power plants for each state.
-- Combines the results and calculates the percentage of renewable power plants for each state.
-- Sorts the states by the percentage of renewable power plants in descending order.
-
----
-
-### **Query 8: Renewable Capacity by State vs. National Investment**
-**Objective:** Analyze the renewable energy generation capacity by state and compare it to the total national investment in clean energy.
-The idea here was to show the usage of the `$lookup`, showing that even though the idea of the MongoDb design was to avoid JOINs, we can still do it if necessary.
-
-**Explanation:**
-- Uses `$facet` to calculate the renewable generation capacity for each state and the total renewable capacity for Brazil.
-- Performs a `$lookup` to retrieve the total clean energy investment from the `paises` collection.
-- Calculates the percentage of each state's renewable capacity relative to the national total and includes the total investment in the results.
-- Sorts the states by renewable capacity in descending order.
-
----

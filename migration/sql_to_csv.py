@@ -5,10 +5,10 @@ import pandas as pd
 import os
 from dotenv import load_dotenv
 
-# Carrega as variáveis do arquivo .env para o ambiente
+# Load environment variables from the .env file into the environment
 load_dotenv()
 
-# --- CONFIGURAÇÃO DO POSTGRESQL ---
+# --- POSTGRESQL CONFIGURATION ---
 PG_CONFIG = {
     'dbname': os.getenv('PG_DBNAME'),
     'user': os.getenv('PG_USER'),
@@ -17,22 +17,22 @@ PG_CONFIG = {
     'port': os.getenv('PG_PORT', '5432')
 }
 
-# Diretório para salvar os arquivos CSV
+# Directory to save CSV files
 OUTPUT_DIR = 'migration/csv_data'
 
 def export_paises_to_csv(pg_conn):
     """
-    Exporta dados da tabela Pais e suas tabelas de indicadores relacionadas para arquivos CSV.
+    Exports data from the Pais table and its related indicator tables to CSV files.
     """
-    print("Iniciando exportação de países e indicadores para CSV...")
+    print("Starting export of countries and indicators to CSV...")
 
-    # Exportar a tabela principal de países
-    print("  Exportando 'paises.csv'...")
+    # Export the main countries table
+    print("  Exporting 'paises.csv'...")
     sql_paises = "SELECT id_pais, code, nome FROM Pais"
     df_paises = pd.read_sql(sql_paises, pg_conn)
     df_paises.to_csv(os.path.join(OUTPUT_DIR, 'paises.csv'), index=False)
 
-    # Mapeamento das tabelas de indicadores
+    # Mapping of indicator tables
     indicator_tables = {
         'idh': ('indice', 'idh'),
         'acesso_eletricidade': ('porcentagem', 'acesso_eletricidade'),
@@ -42,28 +42,28 @@ def export_paises_to_csv(pg_conn):
         'energia_renovavel_per_capita': ('geracao_watts', 'geracao_energia_renovavel_per_capita')
     }
 
-    # Exportar cada tabela de indicador
+    # Export each indicator table
     for table_name, (value_column, mongo_field) in indicator_tables.items():
-        print(f"  Exportando 'indicador_{table_name}.csv'...")
+        print(f"  Exporting 'indicador_{table_name}.csv'...")
         sql_indicator = f"SELECT id_pais, ano, {value_column} FROM {table_name}"
         df_indicator = pd.read_sql(sql_indicator, pg_conn)
         
-        # Renomeia a coluna de valor para um nome padronizado para facilitar a importação
+        # Renames the value column to a standardized name for easier import
         df_indicator.rename(columns={value_column: 'valor'}, inplace=True)
         
         df_indicator.to_csv(os.path.join(OUTPUT_DIR, f'indicador_{table_name}.csv'), index=False)
 
-    print("Exportação de países e indicadores concluída!")
+    print("Export of countries and indicators completed!")
 
 
 def export_usinas_to_csv(pg_conn):
     """
-    Exporta dados de Usinas e Unidades Geradoras para arquivos CSV.
+    Exports data from Power Plants and Generating Units to CSV files.
     """
-    print("\nIniciando exportação de usinas e unidades geradoras para CSV...")
+    print("\nStarting export of power plants and generating units to CSV...")
 
-    # Exportar dados principais das usinas
-    print("  Exportando 'usinas.csv'...")
+    # Export main power plant data
+    print("  Exporting 'usinas.csv'...")
     sql_usinas = """
     SELECT 
         u.id_usina,
@@ -88,34 +88,34 @@ def export_usinas_to_csv(pg_conn):
     df_usinas = pd.read_sql(sql_usinas, pg_conn)
     df_usinas.to_csv(os.path.join(OUTPUT_DIR, 'usinas.csv'), index=False)
 
-    # Exportar todas as unidades geradoras de uma vez
-    print("  Exportando 'unidades_geradoras.csv'...")
+    # Export all generating units at once
+    print("  Exporting 'unidades_geradoras.csv'...")
     sql_unidades = "SELECT * FROM Unidade_Geradora"
     df_unidades = pd.read_sql(sql_unidades, pg_conn)
     df_unidades.to_csv(os.path.join(OUTPUT_DIR, 'unidades_geradoras.csv'), index=False)
     
-    print("Exportação de usinas e unidades concluída!")
+    print("Export of power plants and generating units completed!")
 
 
 if __name__ == '__main__':
-    # Cria o diretório de output se não existir
+    # Create the output directory if it does not exist
     if not os.path.exists(OUTPUT_DIR):
         os.makedirs(OUTPUT_DIR)
 
     pg_conn = None
     try:
-        print("Conectando ao PostgreSQL...")
+        print("Connecting to PostgreSQL...")
         pg_conn = psycopg2.connect(**PG_CONFIG)
-        print("Conexão com PostgreSQL bem-sucedida.")
+        print("PostgreSQL connection successful.")
 
-        # Executar as exportações
+        # Execute the exports
         export_paises_to_csv(pg_conn)
         export_usinas_to_csv(pg_conn)
 
     except (Exception, psycopg2.Error) as error:
-        print(f"Ocorreu um erro: {error}")
+        print(f"An error occurred: {error}")
     
     finally:
         if pg_conn:
             pg_conn.close()
-            print("\nConexão com PostgreSQL fechada.")
+            print("\nPostgreSQL connection closed.")

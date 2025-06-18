@@ -4,20 +4,20 @@ from pymongo import MongoClient
 from typing import List, Dict, Any
 from dotenv import load_dotenv
 
-# Carrega as variáveis do arquivo .env para o ambiente
+# Load environment variables from the .env file into the environment
 load_dotenv()
 
-# --- CONFIGURAÇÃO DO MONGODB ---
+# --- MONGODB CONFIGURATION ---
 MONGO_URI = os.getenv('MONGO_URI')
 MONGO_DB_NAME = os.getenv('MONGO_DB_NAME')
 
 def execute_and_save_queries(db: Any):
     """
-    Executa uma lista de queries pré-definidas e salva os resultados em arquivos CSV.
+    Executes a list of predefined queries and saves the results to CSV files.
     """
-    # --- Definição de todas as 8 Queries ---
+    # --- Definition of all 8 Queries ---
 
-    # Query 1: Comparação do Acesso à Eletricidade: Brasil vs. Média Global
+    # Query 1: Comparison of Electricity Access - Brazil vs. Global Average
     q1_pipeline = [
         {"$unwind": "$acesso_eletricidade"},
         {"$group": {
@@ -37,7 +37,7 @@ def execute_and_save_queries(db: Any):
         {"$sort": {"ano": 1}}
     ]
 
-    # Query 2: Top 10 Países com Maior Acesso a Energia Renovável (2020)
+    # Query 2: Top 10 Countries with Highest Renewable Energy Access (2020)
     q2_pipeline = [
         {"$match": {"acesso_energia_renovavel": {"$exists": True, "$ne": []}}},
         {"$unwind": "$acesso_energia_renovavel"},
@@ -50,7 +50,7 @@ def execute_and_save_queries(db: Any):
         }}
     ]
 
-    # Query 3: Correlação entre IDH e Geração de Energia Renovável Per Capita
+    # Query 3: Correlation Between HDI and Renewable Energy Generation Per Capita
     q3_pipeline = [
     {"$unwind": "$idh"},
     {"$unwind": "$geracao_energia_renovavel_per_capita"},
@@ -137,7 +137,7 @@ def execute_and_save_queries(db: Any):
     {"$sort": {"ano": 1}}
 ]
 
-    # Query 4: Agentes com Múltiplas Usinas no Brasil
+    # Query 4: Agents with Multiple Power Plants in Brazil
     q4_pipeline = [
         {"$group": {"_id": "$agente_proprietario", "total_usinas": {"$sum": 1}}},
         {"$match": {"total_usinas": {"$gt": 1}}},
@@ -145,7 +145,7 @@ def execute_and_save_queries(db: Any):
         {"$sort": {"total_usinas": -1}}
     ]
 
-    # Query 5: Quantidade de Usinas por Tipo de Combustível no Brasil
+    # Query 5: Number of Power Plants by Fuel Type in Brazil
     q5_pipeline = [
         {"$unwind": "$unidades_geradoras"},
         {"$group": {"_id": "$unidades_geradoras.combustivel", "usinas_distintas": {"$addToSet": "$_id"}}},
@@ -153,7 +153,7 @@ def execute_and_save_queries(db: Any):
         {"$sort": {"qtd_usinas": -1}}
     ]
 
-    # Query 6: Capacidade Total de Geração por Estado no Brasil
+    # Query 6: Total Generation Capacity by State in Brazil
     q6_pipeline = [
         {"$unwind": "$unidades_geradoras"},
         {"$group": {"_id": "$estado.nome", "capacidade_total_mw": {"$sum": "$unidades_geradoras.potencia_efetiva_mw"}}},
@@ -161,7 +161,7 @@ def execute_and_save_queries(db: Any):
         {"$sort": {"capacidade_total_mw": -1}}
     ]
     
-    # Query 7: Percentual de Usinas Renováveis por Estado
+    # Query 7: Percentage of Renewable Power Plants by State
     q7_pipeline = [
         {"$facet": {
             "total_por_estado": [{"$group": {"_id": "$estado.nome", "total": {"$sum": 1}}}],
@@ -193,7 +193,7 @@ def execute_and_save_queries(db: Any):
         {"$sort": {"perc_renovaveis": -1}}
     ]
 
-    # Query 8: Análise da Capacidade Renovável por Estado vs. Investimento Nacional
+    # Query 8: Renewable Capacity by State vs. National Investment
     q8_pipeline = [
         {"$facet": {
             "capacidade_por_estado": [
@@ -229,7 +229,7 @@ def execute_and_save_queries(db: Any):
         {"$sort": {"capacidade_renovavel_mw": -1}}
     ]
 
-    # Lista de queries para executar
+    # List of queries to execute
     queries_to_run = [
         ("1_comparacao_acesso_eletricidade", "paises", q1_pipeline),
         ("2_top10_paises_energia_renovavel", "paises", q2_pipeline),
@@ -241,14 +241,14 @@ def execute_and_save_queries(db: Any):
         ("8_analise_capacidade_vs_investimento", "usinas", q8_pipeline)
     ]
 
-    # Criar diretório para os resultados, se não existir
+    # Create directory for results if it does not exist
     output_dir = "queries/query_results"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    # Executar cada query e salvar o resultado
+    # Execute each query and save the result
     for filename, collection_name, pipeline in queries_to_run:
-        print(f"Executando query: {filename}...")
+        print(f"Running query: {filename}...")
         
         collection = db[collection_name]
         results = list(collection.aggregate(pipeline))
@@ -257,29 +257,29 @@ def execute_and_save_queries(db: Any):
             df = pd.DataFrame(results)
             output_path = os.path.join(output_dir, f"{filename}.csv")
             df.to_csv(output_path, index=False, encoding='utf-8')
-            print(f"Resultados salvos em: {output_path}\n")
+            print(f"Results saved to: {output_path}\n")
         else:
-            print("Query não retornou resultados.\n")
+            print("Query returned no results.\n")
 
 def main():
     """
-    Função principal para conectar ao MongoDB e iniciar a execução das queries.
+    Main function to connect to MongoDB and start executing queries.
     """
     try:
-        print("Conectando ao MongoDB Atlas...")
+        print("Connecting to MongoDB Atlas...")
         mongo_client = MongoClient(MONGO_URI)
         mongo_client.admin.command('ping')
         mongo_db = mongo_client[MONGO_DB_NAME]
-        print("Conexão com MongoDB Atlas bem-sucedida.")
+        print("Connection to MongoDB Atlas successful.")
 
         execute_and_save_queries(mongo_db)
 
     except Exception as e:
-        print(f"Ocorreu um erro: {e}")
+        print(f"An error occurred: {e}")
     finally:
         if 'client' in locals() and mongo_client:
             mongo_client.close()
-            print("Conexão com o MongoDB fechada.")
+            print("MongoDB connection closed.")
 
 if __name__ == "__main__":
     main()
