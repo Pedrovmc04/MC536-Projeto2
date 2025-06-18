@@ -1,5 +1,3 @@
-# csv_to_mongo.py (Corrigido)
-
 import pandas as pd
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
