@@ -336,3 +336,48 @@ Below are the 8 queries implemented in this project, along with their objectives
 **Explanation:**
 - Groups power plants by their agent owner (`agente_proprietario`).
 - Counts the total number of power plants for each agent.
+- Filters agents with more than one power plant and sorts them by the total number of power plants.
+
+---
+
+### **Query 5: Number of Power Plants by Fuel Type in Brazil**
+**Objective:** Aggregate the number of distinct power plants for each fuel type in Brazil.
+
+**Explanation:**
+- Unwinds the `unidades_geradoras` array to process individual generating units.
+- Groups the units by their fuel type (`combustivel`).
+- Counts the number of distinct power plants for each fuel type and sorts the results in descending order.
+
+---
+
+### **Query 6: Total Generation Capacity by State in Brazil**
+**Objective:** Calculate the total generation capacity (in MW) for each state in Brazil.
+
+**Explanation:**
+- Unwinds the `unidades_geradoras` array to process individual generating units.
+- Groups the units by state (`estado.nome`) and sums their effective power (`potencia_efetiva_mw`).
+- Sorts the states by total generation capacity in descending order.
+
+---
+
+### **Query 7: Percentage of Renewable Power Plants by State**
+**Objective:** Calculate the percentage of renewable power plants for each state in Brazil.
+
+**Explanation:**
+- Uses `$facet` to calculate the total number of power plants and the number of renewable power plants for each state.
+- Combines the results and calculates the percentage of renewable power plants for each state.
+- Sorts the states by the percentage of renewable power plants in descending order.
+
+---
+
+### **Query 8: Renewable Capacity by State vs. National Investment**
+**Objective:** Analyze the renewable energy generation capacity by state and compare it to the total national investment in clean energy.
+The idea here was to show the usage of the `$lookup`, showing that even though the idea of the MongoDb design was to avoid JOINs, we can still do it if necessary.
+
+**Explanation:**
+- Uses `$facet` to calculate the renewable generation capacity for each state and the total renewable capacity for Brazil.
+- Performs a `$lookup` to retrieve the total clean energy investment from the `paises` collection.
+- Calculates the percentage of each state's renewable capacity relative to the national total and includes the total investment in the results.
+- Sorts the states by renewable capacity in descending order.
+
+---
